@@ -1,0 +1,28 @@
+id: lab01
+title: "Contract: a bug-hunter agent"
+agent_name: bug-hunter
+time_budget_s: 90
+timeout_s: 240
+consistency_runs: 3
+line_tolerance: 2
+weights: {structure: 0.2, behavior: 0.4, speed: 0.1, robustness: 0.3}
+task_prompt: |
+  Customers who buy exactly 10 units of an item are not getting the bulk
+  discount. Buying 11 or more units works. Find the root cause in this
+  repository and report it.
+expected:
+  file: shop/pricing.py
+  line: 16
+  cause: "Off-by-one: the bulk discount check uses `qty > BULK_THRESHOLD` instead of `qty >= BULK_THRESHOLD`, so exactly 10 units is excluded."
+  fix: "Change the comparison to `qty >= BULK_THRESHOLD`."
+variants:
+  - name: moved
+    overlay: variants/moved
+    expected: {file: shop/pricing.py, line: 31}
+  - name: renamed
+    overlay: variants/renamed
+    remove: [shop/pricing.py]
+    expected: {file: shop/rates.py, line: 16}
+  - name: decoy
+    overlay: variants/decoy
+    expected: {file: shop/pricing.py, line: 16}
