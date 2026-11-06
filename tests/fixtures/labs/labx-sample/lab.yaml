@@ -12,6 +12,13 @@ variants:
     expected:
       file: a.py
       line: 2
+  - name: v1
+    overlay: variants/v1
+    remove:
+      - old.txt
+    expected:
+      file: b.py
+      line: 1
 line_tolerance: 2
 time_budget_s: 60
 timeout_s: 120
