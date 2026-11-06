@@ -1,0 +1,23 @@
+id: labx
+title: Sample lab
+agent_name: sample-agent
+task_prompt: Find the bug.
+expected:
+  file: a.py
+  line: 1
+  cause: Wrong value
+  fix: Change x
+variants:
+  - name: inherit
+    expected:
+      file: a.py
+      line: 2
+line_tolerance: 2
+time_budget_s: 60
+timeout_s: 120
+consistency_runs: 3
+weights:
+  structure: 0.25
+  behavior: 0.25
+  speed: 0.25
+  robustness: 0.25
