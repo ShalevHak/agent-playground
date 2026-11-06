@@ -50,7 +50,7 @@ def test_scorecard_none_dims_renormalize(tmp_path):
     lab = make_lab(tmp_path)
     c = compute_scorecard(lab, struct(50.0), [], None, None)
     assert (c.behavior, c.speed, c.robustness) == (None, None, None)
-    assert c.total == 50.0
+    assert c.total is None  # no outcomes (gate failed): no total
     # quick: robustness skipped -> weights 0.2/0.4/0.1 renormalized
     c = compute_scorecard(lab, struct(0.0), [out()], RobustnessResult(None, None, 1, 1, True), None)
     assert c.robustness is None and c.total == round(100 * 0.5 / 0.7, 1)
@@ -98,3 +98,25 @@ def test_write_report_files(tmp_path):
     assert "events" not in data["runs"][0] and data["judge"] is None
     lines = (tmp_path / "r" / "transcripts" / "base-1.jsonl").read_text(encoding="utf-8").splitlines()
     assert [json.loads(x) for x in lines] == [{"type": "result"}, {"type": "x"}]
+
+
+def test_render_total_dash_without_outcomes(tmp_path):
+    lab = make_lab(tmp_path)
+    c = compute_scorecard(lab, struct(50.0), [], None, None)
+    text = render(lab, c, struct(50.0), [], None, None)
+    assert [l for l in text.splitlines() if l.startswith("TOTAL")][0].split() == ["TOTAL", "-"]
+    assert "judge" not in text
+
+
+def test_render_code_only_notes(tmp_path):
+    lab = make_lab(tmp_path)
+    st = struct()
+    outs = [out()]
+    c = compute_scorecard(lab, st, outs, None, None)
+    skipped = render(lab, c, st, outs, None, None, no_judge=True)
+    assert "judge: skipped (--no-judge)" in skipped
+    assert "(behavior = code checks only)" in skipped
+    err = render(lab, c, st, outs, None, JudgeResult(None, None, "", [], "boom"))
+    assert "judge unavailable: boom (behavior = code checks only)" in err
+    ok = render(lab, c, st, outs, None, JudgeResult(80, 80, "c", [], None))
+    assert "code checks only" not in ok

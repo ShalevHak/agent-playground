@@ -65,7 +65,8 @@ def main(argv: Optional[List[str]] = None, runner: Optional[Runner] = None) -> i
         print("running judge...", flush=True)
         judge = run_judge(lab, agent_file.read_text(encoding="utf-8"), outcomes, runner)
     card = compute_scorecard(lab, structure, outcomes, robustness, judge)
-    print(render(lab, card, structure, outcomes, robustness, judge), flush=True)
+    print(render(lab, card, structure, outcomes, robustness, judge, no_judge=args.no_judge),
+          flush=True)
     out_dir = _unique_dir(Path(args.runs_dir))
     path = write_report(out_dir, lab, card, structure, outcomes, robustness, judge,
                         agent_file=agent_file)

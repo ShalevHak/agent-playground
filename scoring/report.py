@@ -51,7 +51,7 @@ def compute_scorecard(lab: Lab, structure: StructureResult, outcomes: List[RunOu
         w = lab.weights.get(name, 0.0)
         num += w * val
         den += w
-    total = round(num / den, 1) if den > 0 else None
+    total = round(num / den, 1) if den > 0 and outcomes else None
     return Scorecard(structure=_round(structure.score), behavior=_round(behavior),
                      speed=_round(speed), robustness=_round(rob), total=total)
 
@@ -80,7 +80,7 @@ def _reason(o: RunOutcome) -> str:
 
 def render(lab: Lab, scorecard: Scorecard, structure: StructureResult,
            outcomes: List[RunOutcome], robustness: Optional[RobustnessResult],
-           judge: Optional[JudgeResult]) -> str:
+           judge: Optional[JudgeResult], no_judge: bool = False) -> str:
     out = []  # type: List[str]
     title = "%s - %s" % (lab.id, lab.title)
     bar = "=" * max(40, len(title))
@@ -111,9 +111,15 @@ def render(lab: Lab, scorecard: Scorecard, structure: StructureResult,
             robustness.passed_runs, robustness.total_runs,
             "consistent" if robustness.consistent else "not consistent"))
         out.append("")
-    if judge is not None:
-        if judge.error:
-            out.append(_ascii("judge unavailable: " + judge.error))
+    if outcomes and judge is None:
+        out.append("judge: skipped (--no-judge)" if no_judge
+                   else "judge: not run (behavior = code checks only)")
+        if no_judge:
+            out.append("(behavior = code checks only)")
+    elif judge is not None:
+        if judge.error or judge.cause_score is None or judge.fix_score is None:
+            out.append(_ascii("judge unavailable: %s (behavior = code checks only)"
+                              % (judge.error or "no scores")))
         else:
             out.append("Judge: cause %s, fix %s" % (_fmt(judge.cause_score), _fmt(judge.fix_score)))
             out.append(_ascii("  " + judge.critique))
