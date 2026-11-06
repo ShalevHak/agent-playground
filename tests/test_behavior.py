@@ -87,7 +87,7 @@ def test_evaluate_pass():
 def test_evaluate_line_off():
     o = evaluate_run("base-1", "base", EXP, 2, res(json.dumps(dict(GOOD, line=13))), [])
     assert o.file_match and not o.line_match and not o.passed
-    assert code_behavior_score(o) == pytest.approx(200 / 3)
+    assert code_behavior_score(o) == 75
 
 
 def test_evaluate_invalid_report():
@@ -159,3 +159,24 @@ def test_runner_exception_becomes_outcome(lab, agent):
 def test_edited_files_fail_run():
     o = evaluate_run("base-1", "base", EXP, 2, res(json.dumps(dict(GOOD, line=10))), ["a.py"])
     assert o.file_match and o.line_match and not o.passed
+
+
+# strictness
+def test_extra_keys_not_strict():
+    p = parse_report(json.dumps(dict(GOOD, note="x")))
+    assert p.data is not None and not p.strict and p.error is None
+
+
+def test_strict_perfect_scores_100():
+    o = evaluate_run("base-1", "base", EXP, 2, res(json.dumps(dict(GOOD, line=10))), [])
+    assert o.report.strict and code_behavior_score(o) == 100
+
+
+@pytest.mark.parametrize("text", [
+    "Here you go: " + json.dumps(dict(GOOD, line=10)),
+    "```json\n" + json.dumps(dict(GOOD, line=10)) + "\n```",
+    json.dumps(dict(GOOD, line=10, extra=1)),
+])
+def test_non_strict_scores_below_100_but_passes(text):
+    o = evaluate_run("base-1", "base", EXP, 2, res(text), [])
+    assert o.passed and code_behavior_score(o) == 75

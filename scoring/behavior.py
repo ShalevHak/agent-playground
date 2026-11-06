@@ -48,7 +48,8 @@ def parse_report(text: str) -> ParsedReport:
             else isinstance(val, str)
         if not ok:
             return ParsedReport(None, False, "wrong type for key: " + key)
-    return ParsedReport(obj, _strict, None)
+    extra = [k for k in obj if k not in REPORT_KEYS]
+    return ParsedReport(obj, _strict and not extra, None)
 
 
 def normalize_path(p: str) -> str:
@@ -79,7 +80,8 @@ def evaluate_run(run_id: str, variant: str, expected: Expected, line_tolerance: 
 
 
 def code_behavior_score(outcome: RunOutcome) -> float:
-    checks = [outcome.report.data is not None, outcome.file_match, outcome.line_match]
+    checks = [outcome.report.data is not None, outcome.report.strict, outcome.file_match,
+              outcome.line_match]
     return 100.0 * sum(1 for c in checks if c) / len(checks)
 
 
