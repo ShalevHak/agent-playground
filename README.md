@@ -74,6 +74,11 @@ seconds. Token cost is not measured by the harness; each full run spends real to
 
 ## Adding a lab
 
+In iteration 1 the harness supports read-only, single-agent labs that report a
+file+line. The tool allowlist, report schema, edit policy and judge rubric become
+per-lab config in iteration 2 (before Lab 02); until then a lab that needs more
+than that needs harness changes.
+
 Create `labs/labNN-slug/` with a `lab.yaml`, a `fixture/` repo, optional
 `variants/`, and a `solution/`. All keys below are required except `remove`
 and `overlay` inside a variant:

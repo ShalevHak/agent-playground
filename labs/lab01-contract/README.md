@@ -57,10 +57,12 @@ to a renamed file, and a decoy module with a misleading comment.
 ## Scores
 
 - **Structure** - is the agent file well formed and does the contract cover the
-  six parts? (coded checker + LLM judge)
-- **Behavior** - did it find the right file and line (within 2 lines), and a
-  correct cause and fix? Did it leave the repo unchanged? (coded checker for
-  file/line/JSON, LLM judge for cause and fix quality)
+  six parts? (coded checker only; the LLM judge does not grade structure)
+- **Behavior** - did it find the right file and line (within 2 lines; `line` is
+  1-based), and is the answer exactly the JSON object, with no prose, fence or
+  extra keys? (coded checker for file/line/JSON strictness, LLM judge for cause
+  and fix quality.) Editing any file does not lower this score directly, but it
+  fails the run, which hurts robustness.
 - **Speed** - how long a run took against the 90 second budget.
 - **Robustness** - does it still succeed on the variants and give consistent
   answers across repeated runs?
