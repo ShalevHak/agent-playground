@@ -13,8 +13,7 @@ def build_workspace(lab: Lab, variant: Optional[Variant], agent_file: Path,
     """Create a temp workspace. The caller deletes it."""
     ws = Path(tempfile.mkdtemp(prefix="pg-", dir=str(parent) if parent else None))
     try:
-        shutil.copytree(str(lab.fixture), str(ws), dirs_exist_ok=True) \
-            if False else _copy_tree(lab.fixture, ws)
+        _copy_tree(lab.fixture, ws)
         if variant:
             if variant.overlay:
                 _copy_tree(variant.overlay, ws)

@@ -102,6 +102,9 @@ def run_claude(prompt: str, cwd: Path, agent: str, timeout_s: float,
                 stdout = stdout.decode("utf-8", errors="replace")
             if isinstance(stderr, bytes):
                 stderr = stderr.decode("utf-8", errors="replace")
+    except BaseException:
+        _kill_tree(proc)
+        raise
     duration = time.time() - start
     events, res = parse_stream((stdout or "").splitlines())
 
@@ -110,10 +113,12 @@ def run_claude(prompt: str, cwd: Path, agent: str, timeout_s: float,
         error = "timed out after %gs" % timeout_s
     elif proc.returncode != 0:
         error = "exit code %s: %s" % (proc.returncode, (stderr or "")[-500:])
+        if res is not None and res.get("result"):
+            error += " | result: %s" % str(res.get("result"))[:300]
     elif res is None:
         error = "no result event in claude output"
     elif res.get("is_error"):
-        error = "claude reported an error: %s" % str(res.get("result", ""))[-500:]
+        error = "claude reported an error: %s" % str(res.get("result", ""))[:300]
 
     text = ""
     if res is not None and isinstance(res.get("result"), str):

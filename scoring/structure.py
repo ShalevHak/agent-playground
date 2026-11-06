@@ -39,7 +39,7 @@ def _split_frontmatter(text: str) -> Optional[Tuple[object, str]]:
             body = "".join(lines[i + 1:])
             try:
                 return yaml.safe_load(block), body
-            except yaml.YAMLError:
+            except Exception:
                 return None
     return None
 

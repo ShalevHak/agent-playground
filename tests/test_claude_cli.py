@@ -73,3 +73,35 @@ def test_run_timeout_with_grandchild_holding_pipe(monkeypatch, tmp_path):
     assert r.timed_out
     assert r.duration_s < 15
     assert len(r.events) >= 1
+
+
+def test_run_is_error_includes_result_text(monkeypatch, tmp_path):
+    monkeypatch.setenv("FAKE_CLAUDE_MODE", "is_error")
+    r = run_claude("hi", tmp_path, "a", 30, claude_cmd=FAKE)
+    assert r.error and "Credit balance is too low" in r.error
+
+
+def test_run_nonzero_exit_includes_result_text(monkeypatch, tmp_path):
+    monkeypatch.setenv("FAKE_CLAUDE_MODE", "exit_with_result")
+    r = run_claude("hi", tmp_path, "a", 30, claude_cmd=FAKE)
+    assert r.error and r.error.startswith("exit code 1")
+    assert "Credit balance is too low" in r.error
+
+
+def test_keyboard_interrupt_kills_process_tree(monkeypatch, tmp_path):
+    monkeypatch.setenv("FAKE_CLAUDE_MODE", "sleep")
+    killed = []
+    real_kill = claude_cli._kill_tree
+
+    def spy(proc):
+        killed.append(proc.pid)
+        real_kill(proc)
+
+    def boom(self, *a, **kw):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr(claude_cli, "_kill_tree", spy)
+    monkeypatch.setattr(claude_cli.subprocess.Popen, "communicate", boom)
+    with pytest.raises(KeyboardInterrupt):
+        run_claude("hi", tmp_path, "a", 30, claude_cmd=FAKE)
+    assert len(killed) == 1

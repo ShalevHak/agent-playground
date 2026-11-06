@@ -164,3 +164,8 @@ def test_stopping_phrases(tmp_path):
         assert r["stopping_rule"].passed, phrase
     r = by_id(check_structure(write(tmp_path, agent(body="stoppage nonstop")), "bug-hunter"))
     assert not r["stopping_rule"].passed
+
+
+def test_yaml_value_error_fails_frontmatter_without_crash(tmp_path):
+    res = check_structure(write(tmp_path, agent(desc="description: 2026-02-30")), "bug-hunter")
+    assert not by_id(res)["frontmatter"].passed
