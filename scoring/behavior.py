@@ -70,7 +70,7 @@ def evaluate_run(run_id: str, variant: str, expected: Expected, line_tolerance: 
     file_ok = bool(data) and file_matches(data["file"], expected.file)
     line_ok = bool(data) and abs(data["line"] - expected.line) <= line_tolerance
     passed = (data is not None and file_ok and line_ok
-              and not result.timed_out and result.error is None)
+              and not edited_files and not result.timed_out and result.error is None)
     return RunOutcome(run_id=run_id, variant=variant, report=report, file_match=file_ok,
                       line_match=line_ok, edited_files=list(edited_files),
                       duration_s=result.duration_s, timed_out=result.timed_out,

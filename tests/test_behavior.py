@@ -141,6 +141,7 @@ def test_edit_detection_and_cleanup(lab, agent):
 
     outs = execute_runs(lab, agent, runner, quick=True)
     assert outs[0].edited_files == ["a.py", "new.txt"]
+    assert not outs[0].passed
     assert not seen[0].exists()
 
 
@@ -153,3 +154,8 @@ def test_runner_exception_becomes_outcome(lab, agent):
     assert o.error == "kaboom" and not o.passed and o.duration_s == 0.0
     assert not o.timed_out and o.events == [] and o.result_text == ""
     assert o.report.data is None
+
+
+def test_edited_files_fail_run():
+    o = evaluate_run("base-1", "base", EXP, 2, res(json.dumps(dict(GOOD, line=10))), ["a.py"])
+    assert o.file_match and o.line_match and not o.passed
