@@ -1,6 +1,7 @@
 """Fake claude CLI for tests. Behavior driven by FAKE_CLAUDE_MODE."""
 import json
 import os
+import subprocess
 import sys
 import time
 
@@ -15,6 +16,9 @@ def main():
     emit({"type": "system", "subtype": "init", "tools": ["Read"]})
     if mode == "sleep":
         time.sleep(5)
+    if mode == "sleep_child":
+        subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+        time.sleep(30)
     emit({"type": "assistant", "message": {"content": [
         {"type": "text", "text": "thinking"},
         {"type": "tool_use", "name": "Read", "input": {"file_path": "a.txt"}}]}})

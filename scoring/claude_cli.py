@@ -1,6 +1,8 @@
 """Run `claude -p` headless and parse its stream-json output."""
 import json
+import os
 import shutil
+import signal
 import subprocess
 import time
 from dataclasses import dataclass
@@ -56,6 +58,21 @@ def parse_stream(lines: Iterable[str]) -> Tuple[List[dict], Optional[dict]]:
     return events, result
 
 
+def _kill_tree(proc: "subprocess.Popen") -> None:
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            os.killpg(proc.pid, signal.SIGKILL)
+    except Exception:
+        pass
+    try:
+        proc.kill()
+    except Exception:
+        pass
+
+
 def run_claude(prompt: str, cwd: Path, agent: str, timeout_s: float,
                claude_cmd: Optional[List[str]] = None) -> ClaudeResult:
     if claude_cmd is None:
@@ -63,14 +80,28 @@ def run_claude(prompt: str, cwd: Path, agent: str, timeout_s: float,
     cmd = list(claude_cmd) + ["-p", "--agent", agent] + CLAUDE_FLAGS
     start = time.time()
     proc = subprocess.Popen(cmd, cwd=str(cwd), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, encoding="utf-8", errors="replace")
+                            stderr=subprocess.PIPE, encoding="utf-8", errors="replace",
+                            start_new_session=(os.name != "nt"))
     timed_out = False
     try:
         stdout, stderr = proc.communicate(prompt, timeout=timeout_s)
     except subprocess.TimeoutExpired:
         timed_out = True
-        proc.kill()
-        stdout, stderr = proc.communicate()
+        _kill_tree(proc)
+        try:
+            stdout, stderr = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired as exc:
+            stdout, stderr = exc.stdout, exc.stderr
+            for pipe in (proc.stdout, proc.stderr, proc.stdin):
+                try:
+                    if pipe:
+                        pipe.close()
+                except Exception:
+                    pass
+            if isinstance(stdout, bytes):
+                stdout = stdout.decode("utf-8", errors="replace")
+            if isinstance(stderr, bytes):
+                stderr = stderr.decode("utf-8", errors="replace")
     duration = time.time() - start
     events, res = parse_stream((stdout or "").splitlines())
 

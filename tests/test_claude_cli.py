@@ -64,3 +64,12 @@ def test_run_timeout(monkeypatch, tmp_path):
     assert r.timed_out
     assert r.error == "timed out after 1s"
     assert r.duration_s < 4
+    assert len(r.events) >= 1
+
+
+def test_run_timeout_with_grandchild_holding_pipe(monkeypatch, tmp_path):
+    monkeypatch.setenv("FAKE_CLAUDE_MODE", "sleep_child")
+    r = run_claude("hi", tmp_path, "a", 1, claude_cmd=FAKE)
+    assert r.timed_out
+    assert r.duration_s < 15
+    assert len(r.events) >= 1
