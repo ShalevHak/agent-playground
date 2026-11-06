@@ -61,8 +61,7 @@ under the runs directory.
 
 Measured (Lab 01, real claude CLI): a full run of the reference solution
 took about 90 seconds (7 calls, ~10-11s each); `--quick` took about 22
-seconds. Token cost was not measured by the harness; expect a few cents per
-full run.
+seconds. Token cost is not measured by the harness; each full run spends real tokens, so use `--quick` while iterating.
 
 ## Repo layout
 
