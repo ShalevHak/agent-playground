@@ -14,7 +14,8 @@ from scoring.lab import Lab
 
 JUDGE_AGENT_FILE = Path(__file__).parent / "judge" / "judge-agent.md"
 JUDGE_TIMEOUT_S = 300
-JUDGE_PROMPT = ("Grade the submission described in judge-input.json in the current directory. "
+JUDGE_PROMPT = ("Grade the submission described in judge-input.json and agent-definition.md "
+                "in the current directory. "
                 "Follow your instructions exactly.")
 
 
@@ -45,18 +46,34 @@ def tool_calls(events: List[dict], limit: int = 40) -> List[dict]:
     return calls
 
 
-def build_judge_input(lab: Lab, agent_text: str, outcomes: List[RunOutcome]) -> dict:
+AGENT_DEFINITION_FILE = "agent-definition.md"
+LINE_CAP = 500
+TEXT_CAP = 2000
+
+
+def _cap_lines(text: str) -> List[str]:
+    """Split into short lines: Claude Code's Read truncates lines over 2000 chars."""
+    return [ln[:LINE_CAP] for ln in text[:TEXT_CAP].splitlines()]
+
+
+def _short_report(report: Optional[dict]) -> Optional[dict]:
+    if report is None:
+        return None
+    return {k: (v[:LINE_CAP] if isinstance(v, str) else v) for k, v in report.items()}
+
+
+def build_judge_input(lab: Lab, outcomes: List[RunOutcome]) -> dict:
     return {
         "lab": {"id": lab.id, "title": lab.title, "task_prompt": lab.task_prompt},
         "expected": dataclasses.asdict(lab.expected),
         "variant_expected": {v.name: dataclasses.asdict(v.expected) for v in lab.variants},
-        "agent_definition": agent_text,
+        "agent_definition_file": AGENT_DEFINITION_FILE,
         "runs": [{
             "run_id": o.run_id,
             "variant": o.variant,
-            "report": o.report.data,
+            "report": _short_report(o.report.data),
             "strict_json": o.report.strict,
-            "result_text": o.result_text[:2000],
+            "result_text_lines": _cap_lines(o.result_text),
             "code_checks": {"file_match": o.file_match, "line_match": o.line_match,
                             "edited_files": list(o.edited_files), "timed_out": o.timed_out,
                             "error": o.error},
@@ -92,8 +109,9 @@ def run_judge(lab: Lab, agent_text: str, outcomes: List[RunOutcome], runner: Run
         agents = tmp / ".claude" / "agents"
         agents.mkdir(parents=True)
         shutil.copyfile(str(JUDGE_AGENT_FILE), str(agents / "judge.md"))
+        (tmp / AGENT_DEFINITION_FILE).write_text(agent_text, encoding="utf-8")
         (tmp / "judge-input.json").write_text(
-            json.dumps(build_judge_input(lab, agent_text, outcomes), indent=2, ensure_ascii=False),
+            json.dumps(build_judge_input(lab, outcomes), indent=2, ensure_ascii=False),
             encoding="utf-8")
         try:
             res = runner(JUDGE_PROMPT, tmp, "judge", JUDGE_TIMEOUT_S)

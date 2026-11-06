@@ -45,16 +45,18 @@ def test_tool_calls_limit():
 
 def test_build_judge_input_shape(tmp_path):
     lab = make_lab(tmp_path)
-    d = build_judge_input(lab, "AGENT", [outcome(events=[tu("Read", {"a": 1})])])
+    d = build_judge_input(lab, [outcome(events=[tu("Read", {"a": 1})])])
     json.dumps(d)
     assert d["lab"] == {"id": "x", "title": "T", "task_prompt": "find it"}
     assert d["expected"] == {"file": "a.py", "line": 3, "cause": "off by one", "fix": "use <"}
     assert d["variant_expected"]["v1"]["file"] == "b.py"
-    assert d["agent_definition"] == "AGENT"
+    assert "agent_definition" not in d and d["agent_definition_file"] == "agent-definition.md"
     r = d["runs"][0]
     assert r["run_id"] == "base-1" and r["variant"] == "base"
     assert r["report"]["line"] == 3 and r["strict_json"] is True
-    assert len(r["result_text"]) == 2000
+    assert "result_text" not in r
+    assert [len(x) for x in r["result_text_lines"]] == [500]
+    assert all(len(x) <= 500 for x in r["result_text_lines"])
     assert r["code_checks"] == {"file_match": True, "line_match": True, "edited_files": [],
                                 "timed_out": False, "error": None}
     assert r["tool_calls"][0]["tool"] == "Read"
@@ -94,7 +96,7 @@ def test_run_judge_sets_up_cwd_and_cleans(tmp_path):
         seen.update(cwd=cwd, agent=agent, prompt=prompt)
         assert (cwd / ".claude" / "agents" / "judge.md").read_text(encoding="utf-8") == \
             JUDGE_AGENT_FILE.read_text(encoding="utf-8")
-        assert json.loads((cwd / "judge-input.json").read_text(encoding="utf-8"))["agent_definition"] == "A"
+        assert (cwd / "agent-definition.md").read_text(encoding="utf-8") == "A"
         return ok('{"cause_score": 70, "fix_score": 90, "critique": "c", "suggestions": []}')
 
     v = run_judge(make_lab(tmp_path), "A", [outcome()], runner)
@@ -112,3 +114,17 @@ def test_run_judge_errors(tmp_path):
     def raiser(*a):
         raise RuntimeError("bad")
     assert run_judge(lab, "A", [], raiser).error == "bad"
+
+
+def test_judge_input_has_no_long_lines(tmp_path):
+    seen = {}
+
+    def runner(prompt, cwd, agent, timeout):
+        seen["json"] = (cwd / "judge-input.json").read_text(encoding="utf-8")
+        seen["md"] = (cwd / "agent-definition.md").read_text(encoding="utf-8")
+        return ok('{"cause_score": 1, "fix_score": 1, "critique": "c"}')
+
+    long_text = "x" * 5000 + "\n" + "y" * 5000
+    run_judge(make_lab(tmp_path), "A" * 5000, [outcome(text=long_text)], runner)
+    assert seen["md"] == "A" * 5000
+    assert max(len(l) for l in seen["json"].splitlines()) < 1900
