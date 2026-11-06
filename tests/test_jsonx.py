@@ -43,3 +43,13 @@ def test_empty():
 
 def test_first_brace_unparseable_then_later_object():
     assert extract_json_object('{oops} then {"a": 6}') == ({"a": 6}, False)
+
+
+def test_non_json_fence_does_not_steal_json_fence():
+    text = '```python\nx = {"z": 1}\n```\n```json\n{"a": 4}\n```'
+    assert extract_json_object(text) == ({"a": 4}, False)
+
+
+def test_earlier_json_fence_non_dict_then_dict_fence():
+    text = '```json\n[1]\n```\ntext {"q": 0}\n```json\n{"a": 5}\n```'
+    assert extract_json_object(text) == ({"a": 5}, False)

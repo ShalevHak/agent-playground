@@ -3,7 +3,7 @@ import json
 import re
 from typing import Optional, Tuple
 
-_FENCE = re.compile(r"```(?:json)?[ \t]*\r?\n(.*?)```", re.DOTALL | re.IGNORECASE)
+_FENCE = re.compile(r"```([A-Za-z0-9_+-]*)[ \t]*\r?\n(.*?)```", re.DOTALL)
 
 
 def _parse_dict(s: str) -> Optional[dict]:
@@ -47,7 +47,9 @@ def extract_json_object(text: str) -> Tuple[Optional[dict], bool]:
     if obj is not None:
         return obj, True
     for m in _FENCE.finditer(text):
-        obj = _parse_dict(m.group(1).strip())
+        if m.group(1).lower() not in ("", "json"):
+            continue
+        obj = _parse_dict(m.group(2).strip())
         if obj is not None:
             return obj, False
     pos = text.find("{")
