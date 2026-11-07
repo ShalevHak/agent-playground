@@ -6,8 +6,10 @@ A self-paced playground that teaches a team **agentic development with Claude Co
 through hands-on labs. Each lab has a task, a learner-written artifact (agent, skill,
 hook…), and an automatic scorer that is the teacher: it scores and explains.
 
-Iteration 1 = the **scoring harness + Lab 01 (Contract)**. Later labs (fan-out, loop,
-guardrails) add content only; the harness does not change.
+Iteration 1 = the **scoring harness + Lab 01 (Contract)**. In iteration 1 the harness
+supports read-only, single-agent labs that report a file+line; the tool allowlist, report
+schema, edit policy and judge rubric become per-lab config in iteration 2 (before Lab 02).
+Later labs (fan-out, loop, guardrails) then add content only.
 
 ### What the user said
 - Audience: their team, self-paced (clone the repo, run labs alone).
