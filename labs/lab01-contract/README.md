@@ -37,19 +37,14 @@ No prose around it, no code fence, no extra keys.
 
 ## Write your agent
 
-Create `workspace/.claude/agents/bug-hunter.md`:
+Create your agent file from the starter template, then fill in its TODOs:
 
-    ---
-    name: bug-hunter
-    description: <when to use this agent>
-    tools: Read, Grep, Glob
-    ---
-    <your contract here>
+    agentplayground start lab01    # creates workspace/.claude/agents/bug-hunter.md
 
 ## Run it
 
-    python -m scoring.run lab01 --quick    # one fast run on the base repo
-    python -m scoring.run lab01            # full run: base + variants, repeated
+    agentplayground check lab01 --quick    # one fast run on the base repo
+    agentplayground check lab01            # full run: base + variants, repeated
 
 The full run also tries variants: the bug moved to another line, the code moved
 to a renamed file, and a decoy module with a misleading comment.

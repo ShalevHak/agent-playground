@@ -20,13 +20,23 @@ tells you how well it did.
 | 03 | Loop: iterate until a check passes | planned |
 | 04 | Guardrails: permissions and hooks | planned |
 
-Start with `labs/lab01-contract/README.md`. Write your agent in
-`workspace/.claude/agents/bug-hunter.md`, then score it:
+## Quick start
 
-    python -m scoring.run lab01
+    pip install -r requirements.txt
+    pip install -e .                    # installs the `agentplayground` command
 
-A reference solution lives in `labs/lab01-contract/solution/` - try it
-yourself first.
+    agentplayground                     # how the playground works
+    agentplayground list                # see the labs
+    agentplayground show lab01          # read the brief: concept, task, answer format
+    agentplayground start lab01         # create your agent file from a starter
+    agentplayground check lab01 --quick # score it fast while iterating
+    agentplayground check lab01         # full scoring run
+
+If `agentplayground` isn't found, pip's Scripts folder isn't on your PATH; use
+`python -m agentplayground ...` instead.
+
+Your agent lives in `workspace/.claude/agents/<agent>.md`. A reference solution
+lives in each lab's `solution/` folder - try it yourself first.
 
 ## How scoring works
 
@@ -47,7 +57,7 @@ line, tool use, timing) and an **LLM judge** (a separate claude call that
 grades the cause and fix and writes a critique with suggested prompt
 improvements).
 
-Options:
+Advanced: `agentplayground check` calls the scorer, which has extra options:
 
     python -m scoring.run lab01 --quick           # base run only (~2 claude calls)
     python -m scoring.run lab01 --no-judge        # skip the LLM judge
