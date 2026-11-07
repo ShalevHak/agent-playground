@@ -19,9 +19,10 @@ An agent is a markdown file. A good one spells out six things:
 
 The agent receives this prompt:
 
-> Customers who buy exactly 10 units of an item are not getting the bulk
-> discount. Buying 11 or more units works. Find the root cause in this
-> repository and report it.
+> The shop gives a 10% bulk discount when you buy 10 or more units of an
+> item. Customers who buy exactly 10 units are charged full price: 10 units
+> at $2.00 cost $20.00 instead of $18.00. Buying 11 units works ($19.80).
+> Find the root cause in this repository and report it.
 
 The repo (`fixture/`) is a tiny shop library. The symptom is in the cart, the
 cause is elsewhere. The agent must search and read to find it, and must never
