@@ -105,3 +105,16 @@ def test_keyboard_interrupt_kills_process_tree(monkeypatch, tmp_path):
     with pytest.raises(KeyboardInterrupt):
         run_claude("hi", tmp_path, "a", 30, claude_cmd=FAKE)
     assert len(killed) == 1
+
+
+def test_run_ok_reports_token_usage(monkeypatch, tmp_path):
+    monkeypatch.setenv("FAKE_CLAUDE_MODE", "ok")
+    r = run_claude("hello", tmp_path, "myagent", 30, claude_cmd=FAKE)
+    # input = input + cache writes + cache reads (100 + 20 + 300); output = 40
+    assert (r.input_tokens, r.output_tokens) == (420, 40)
+
+
+def test_run_without_usage_has_none_tokens(monkeypatch, tmp_path):
+    monkeypatch.setenv("FAKE_CLAUDE_MODE", "is_error")
+    r = run_claude("hello", tmp_path, "myagent", 30, claude_cmd=FAKE)
+    assert (r.input_tokens, r.output_tokens) == (None, None)

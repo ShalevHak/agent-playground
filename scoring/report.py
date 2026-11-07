@@ -64,6 +64,40 @@ def _fmt(v: Optional[float]) -> str:
     return "-" if v is None else "%.1f" % v
 
 
+def _tok(n: Optional[int]) -> str:
+    if n is None:
+        return "-"
+    return str(n) if n < 1000 else "%.1fk" % (n / 1000.0)
+
+
+def _sum(vals) -> Optional[float]:
+    known = [v for v in vals if v is not None]
+    return sum(known) if known else None
+
+
+def _usage(items) -> dict:
+    """Token/cost totals over outcomes or judge results; unknown values are skipped."""
+    items = list(items)
+    return {"input": _sum(i.input_tokens for i in items),
+            "output": _sum(i.output_tokens for i in items),
+            "cost_usd": _sum(i.cost_usd for i in items)}
+
+
+def _usage_str(u: dict) -> str:
+    cost = "-" if u["cost_usd"] is None else "$%.2f" % u["cost_usd"]
+    return "%s in / %s out (%s)" % (_tok(u["input"]), _tok(u["output"]), cost)
+
+
+def token_summary(outcomes: List[RunOutcome], judge: Optional[JudgeResult]) -> dict:
+    agent = _usage(outcomes)
+    judge_u = _usage([judge] if judge is not None else [])
+    agent["cost_usd"] = None if agent["cost_usd"] is None else round(agent["cost_usd"], 4)
+    judge_u["cost_usd"] = None if judge_u["cost_usd"] is None else round(judge_u["cost_usd"], 4)
+    total = _sum([agent["cost_usd"], judge_u["cost_usd"]])
+    return {"agent": agent, "judge": judge_u,
+            "total_cost_usd": None if total is None else round(total, 4)}
+
+
 def _reason(o: RunOutcome) -> str:
     if o.passed:
         return ""
@@ -102,9 +136,15 @@ def render(lab: Lab, scorecard: Scorecard, structure: StructureResult,
         for o in outcomes:
             d = o.report.data
             loc = "%s:%s" % (d["file"], d["line"]) if d else "-"
-            line = "%s %-16s %-22s %6.1fs  %s" % (
-                "PASS" if o.passed else "FAIL", o.run_id, loc, o.duration_s, _reason(o))
+            line = "%s %-16s %-22s %6.1fs  %-22s %s" % (
+                "PASS" if o.passed else "FAIL", o.run_id, loc, o.duration_s,
+                "%s in / %s out" % (_tok(o.input_tokens), _tok(o.output_tokens)), _reason(o))
             out.append(_ascii("  " + line.rstrip()))
+        out.append("")
+        t = token_summary(outcomes, judge)
+        total = "-" if t["total_cost_usd"] is None else "$%.2f" % t["total_cost_usd"]
+        out.append("Tokens: agent %s | judge %s | total %s"
+                   % (_usage_str(t["agent"]), _usage_str(t["judge"]), total))
         out.append("")
     if robustness is not None and not robustness.skipped:
         out.append("Robustness: %d/%d runs passed; base runs %s" % (
@@ -163,6 +203,7 @@ def write_report(out_dir: Path, lab: Lab, scorecard: Scorecard, structure: Struc
         "runs": runs,
         "robustness": _jsonable(robustness),
         "judge": _jsonable(judge),
+        "tokens": token_summary(outcomes, judge),
     }
     path = out_dir / "report.json"
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
