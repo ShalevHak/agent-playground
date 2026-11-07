@@ -9,7 +9,8 @@ import yaml
 READ_ONLY_TOOLS = {"Read", "Grep", "Glob"}
 
 _EARLIER = "fix the earlier error first"
-_STOP = re.compile(r"\b(stop|stopping|done when|finish(ed)? when|as soon as)\b", re.I)
+_STOP = re.compile(r"\b(stop|stopping|done when|finish(ed)? when|as soon as|once you"
+                   r"|(you are|you're) done)\b", re.I)
 _SCHEMA_WORDS = ("file", "line", "cause", "fix")
 
 
