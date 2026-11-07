@@ -7,9 +7,10 @@ consistency_runs: 3
 line_tolerance: 2
 weights: {structure: 0.2, behavior: 0.4, speed: 0.1, robustness: 0.3}
 task_prompt: |
-  Customers who buy exactly 10 units of an item are not getting the bulk
-  discount. Buying 11 or more units works. Find the root cause in this
-  repository and report it.
+  The shop gives a 10% bulk discount when you buy 10 or more units of an
+  item. Customers who buy exactly 10 units are charged full price: 10 units
+  at $2.00 cost $20.00 instead of $18.00. Buying 11 units works ($19.80).
+  Find the root cause in this repository and report it.
 expected:
   file: shop/pricing.py
   line: 16

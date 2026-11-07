@@ -19,13 +19,29 @@ An agent is a markdown file. A good one spells out six things:
 
 The agent receives this prompt:
 
-> Customers who buy exactly 10 units of an item are not getting the bulk
-> discount. Buying 11 or more units works. Find the root cause in this
-> repository and report it.
+> The shop gives a 10% bulk discount when you buy 10 or more units of an
+> item. Customers who buy exactly 10 units are charged full price: 10 units
+> at $2.00 cost $20.00 instead of $18.00. Buying 11 units works ($19.80).
+> Find the root cause in this repository and report it.
 
 The repo (`fixture/`) is a tiny shop library. The symptom is in the cart, the
 cause is elsewhere. The agent must search and read to find it, and must never
 edit anything.
+
+## How your agent is run
+
+Your file is a Claude Code **subagent** definition (not a skill). For each run
+the harness:
+
+1. copies the repo into a fresh temp folder,
+2. puts your file there as `.claude/agents/bug-hunter.md`,
+3. runs `claude -p --agent bug-hunter` and sends the task prompt above as the
+   user message.
+
+So your agent file is the **system prompt**: a reusable contract (role, tools,
+steps, output, stopping rule). The task prompt is the **user message**, and it is
+injected at run time. Don't hard-code this bug into your agent: the variants move
+and rename the code.
 
 ## Required report
 
@@ -37,19 +53,14 @@ No prose around it, no code fence, no extra keys.
 
 ## Write your agent
 
-Create `workspace/.claude/agents/bug-hunter.md`:
+Create your agent file from the starter template, then fill in its TODOs:
 
-    ---
-    name: bug-hunter
-    description: <when to use this agent>
-    tools: Read, Grep, Glob
-    ---
-    <your contract here>
+    agentplayground start lab01    # creates workspace/.claude/agents/bug-hunter.md
 
 ## Run it
 
-    python -m scoring.run lab01 --quick    # one fast run on the base repo
-    python -m scoring.run lab01            # full run: base + variants, repeated
+    agentplayground check lab01 --quick    # one fast run on the base repo
+    agentplayground check lab01            # full run: base + variants, repeated
 
 The full run also tries variants: the bug moved to another line, the code moved
 to a renamed file, and a decoy module with a misleading comment.

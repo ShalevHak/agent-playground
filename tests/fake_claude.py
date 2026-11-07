@@ -33,7 +33,9 @@ def main():
         return 1 if mode == "exit_with_result" else 0
     emit({"type": "result", "subtype": "success", "is_error": False,
           "result": "echo: " + prompt.strip(), "duration_ms": 10,
-          "num_turns": 2, "total_cost_usd": 0.0144})
+          "num_turns": 2, "total_cost_usd": 0.0144,
+          "usage": {"input_tokens": 100, "cache_creation_input_tokens": 20,
+                    "cache_read_input_tokens": 300, "output_tokens": 40}})
     return 0
 
 

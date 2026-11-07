@@ -33,6 +33,9 @@ class RunOutcome:
     result_text: str
     events: List[dict]
     passed: bool
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    cost_usd: Optional[float] = None
 
 
 def parse_report(text: str) -> ParsedReport:
@@ -76,7 +79,9 @@ def evaluate_run(run_id: str, variant: str, expected: Expected, line_tolerance: 
                       line_match=line_ok, edited_files=list(edited_files),
                       duration_s=result.duration_s, timed_out=result.timed_out,
                       error=result.error, result_text=result.result_text,
-                      events=result.events, passed=passed)
+                      events=result.events, passed=passed,
+                      input_tokens=result.input_tokens, output_tokens=result.output_tokens,
+                      cost_usd=result.cost_usd)
 
 
 def code_behavior_score(outcome: RunOutcome) -> float:

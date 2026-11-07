@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentplayground"
+version = "0.1.0"
+description = "Hands-on labs for agentic development with Claude Code"
+requires-python = ">=3.8"
+dependencies = ["pyyaml>=5.4"]
+
+[project.scripts]
+agentplayground = "agentplayground.cli:main"
+
+# Editable install only (pip install -e .): labs/ and workspace/ are read from the repo.
+[tool.setuptools]
+packages = ["agentplayground", "scoring"]
