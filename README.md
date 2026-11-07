@@ -52,6 +52,10 @@ Four scores (0-100), combined by the weights in the lab's `lab.yaml`:
 - **Robustness** - consistency across repeated runs, and success on
   variants of the repo (code moved, file renamed, decoy file).
 
+Token usage and cost are reported (per run, agent total, judge total) but not
+scored yet. A scored **Efficiency** dimension with a per-lab token budget is
+planned for iteration 2, calibrated from real runs.
+
 Two checkers produce these: a deterministic **code checker** (JSON, file,
 line, tool use, timing) and an **LLM judge** (a separate claude call that
 grades the cause and fix and writes a critique with suggested prompt

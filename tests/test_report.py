@@ -120,3 +120,28 @@ def test_render_code_only_notes(tmp_path):
     assert "judge unavailable: boom (behavior = code checks only)" in err
     ok = render(lab, c, st, outs, None, JudgeResult(80, 80, "c", [], None))
     assert "code checks only" not in ok
+
+
+def tok_out(run_id, inp, outp, cost):
+    o = out(run_id)
+    o.input_tokens, o.output_tokens, o.cost_usd = inp, outp, cost
+    return o
+
+
+def test_render_and_report_show_tokens(tmp_path):
+    lab = make_lab(tmp_path)
+    outs = [tok_out("base-1", 12300, 410, 0.02), tok_out("base-2", None, None, None)]
+    judge = JudgeResult(100.0, 100.0, "good", [], None, input_tokens=9800, output_tokens=600,
+                        cost_usd=0.03)
+    c = compute_scorecard(lab, struct(), outs, None, judge)
+    text = render(lab, c, struct(), outs, None, judge)
+    assert "12.3k in / 410 out" in text
+    assert "Tokens: agent 12.3k in / 410 out ($0.02) | judge 9.8k in / 600 out ($0.03)" \
+           " | total $0.05" in text
+    data = json.loads(write_report(tmp_path / "r", lab, c, struct(), outs, None, judge)
+                      .read_text(encoding="utf-8"))
+    assert data["tokens"] == {
+        "agent": {"input": 12300, "output": 410, "cost_usd": 0.02},
+        "judge": {"input": 9800, "output": 600, "cost_usd": 0.03},
+        "total_cost_usd": 0.05}
+    assert data["runs"][0]["input_tokens"] == 12300

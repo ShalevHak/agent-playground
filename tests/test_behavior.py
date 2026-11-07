@@ -180,3 +180,10 @@ def test_strict_perfect_scores_100():
 def test_non_strict_scores_below_100_but_passes(text):
     o = evaluate_run("base-1", "base", EXP, 2, res(text), [])
     assert o.passed and code_behavior_score(o) == 75
+
+
+def test_evaluate_run_copies_tokens_and_cost():
+    r = ClaudeResult(json.dumps(GOOD), [], 1.0, False, None, 2, 0.05,
+                     input_tokens=1200, output_tokens=80)
+    o = evaluate_run("base-1", "base", EXP, 2, r, [])
+    assert (o.input_tokens, o.output_tokens, o.cost_usd) == (1200, 80, 0.05)

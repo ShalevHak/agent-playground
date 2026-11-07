@@ -26,6 +26,9 @@ class JudgeResult:
     critique: str
     suggestions: List[str]
     error: Optional[str]
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    cost_usd: Optional[float] = None
 
 
 def tool_calls(events: List[dict], limit: int = 40) -> List[dict]:
@@ -118,7 +121,11 @@ def run_judge(lab: Lab, agent_text: str, outcomes: List[RunOutcome], runner: Run
         except Exception as exc:
             return JudgeResult(None, None, "", [], str(exc))
         if res.error or res.timed_out:
-            return JudgeResult(None, None, "", [], res.error or "judge timed out")
-        return parse_verdict(res.result_text)
+            verdict = JudgeResult(None, None, "", [], res.error or "judge timed out")
+        else:
+            verdict = parse_verdict(res.result_text)
+        verdict.input_tokens, verdict.output_tokens = res.input_tokens, res.output_tokens
+        verdict.cost_usd = res.cost_usd
+        return verdict
     finally:
         shutil.rmtree(str(tmp), ignore_errors=True)

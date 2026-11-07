@@ -128,3 +128,11 @@ def test_judge_input_has_no_long_lines(tmp_path):
     run_judge(make_lab(tmp_path), "A" * 5000, [outcome(text=long_text)], runner)
     assert seen["md"] == "A" * 5000
     assert max(len(l) for l in seen["json"].splitlines()) < 1900
+
+
+def test_run_judge_records_tokens_and_cost(tmp_path):
+    from scoring.claude_cli import ClaudeResult
+    verdict = '{"cause_score": 70, "fix_score": 90, "critique": "c", "suggestions": []}'
+    r = ClaudeResult(verdict, [], 1.0, False, None, 1, 0.03, input_tokens=900, output_tokens=60)
+    v = run_judge(make_lab(tmp_path), "A", [outcome()], lambda *a: r)
+    assert (v.input_tokens, v.output_tokens, v.cost_usd) == (900, 60, 0.03)

@@ -22,6 +22,18 @@ class ClaudeResult:
     error: Optional[str]
     num_turns: Optional[int]
     cost_usd: Optional[float]
+    input_tokens: Optional[int] = None   # prompt tokens incl. cache reads/writes
+    output_tokens: Optional[int] = None
+
+
+def usage_tokens(res: Optional[dict]) -> Tuple[Optional[int], Optional[int]]:
+    """(input, output) tokens from a result event's `usage`, or (None, None)."""
+    usage = res.get("usage") if res else None
+    if not isinstance(usage, dict):
+        return None, None
+    keys = ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")
+    inp = sum(int(usage.get(k) or 0) for k in keys)
+    return inp, int(usage.get("output_tokens") or 0)
 
 
 Runner = Callable[[str, Path, str, float], ClaudeResult]
@@ -123,7 +135,9 @@ def run_claude(prompt: str, cwd: Path, agent: str, timeout_s: float,
     text = ""
     if res is not None and isinstance(res.get("result"), str):
         text = res["result"]
+    inp, outp = usage_tokens(res)
     return ClaudeResult(result_text=text, events=events, duration_s=duration,
                         timed_out=timed_out, error=error,
                         num_turns=res.get("num_turns") if res else None,
-                        cost_usd=res.get("total_cost_usd") if res else None)
+                        cost_usd=res.get("total_cost_usd") if res else None,
+                        input_tokens=inp, output_tokens=outp)
