@@ -28,6 +28,21 @@ The repo (`fixture/`) is a tiny shop library. The symptom is in the cart, the
 cause is elsewhere. The agent must search and read to find it, and must never
 edit anything.
 
+## How your agent is run
+
+Your file is a Claude Code **subagent** definition (not a skill). For each run
+the harness:
+
+1. copies the repo into a fresh temp folder,
+2. puts your file there as `.claude/agents/bug-hunter.md`,
+3. runs `claude -p --agent bug-hunter` and sends the task prompt above as the
+   user message.
+
+So your agent file is the **system prompt**: a reusable contract (role, tools,
+steps, output, stopping rule). The task prompt is the **user message**, and it is
+injected at run time. Don't hard-code this bug into your agent: the variants move
+and rename the code.
+
 ## Required report
 
 The agent's final answer must be ONLY this JSON object:
